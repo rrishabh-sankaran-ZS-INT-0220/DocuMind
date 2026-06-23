@@ -1,0 +1,9 @@
+﻿fastapi
+uvicorn[standard]
+pydantic
+SQLAlchemy[asyncio]
+asyncpg
+python-jose[cryptography]
+passlib[bcrypt]
+PyMuPDF
+python-docx
