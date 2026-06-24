@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from backend.app.config import settings
 
 
-engine = create_async_engine(settings.database_url, future=True, echo=False)
+engine = create_async_engine(settings.async_db_url, future=True, echo=False)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
@@ -16,6 +16,5 @@ AsyncSessionLocal = async_sessionmaker(
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Yield an async database session for dependency injection."""
-
     async with AsyncSessionLocal() as session:
         yield session

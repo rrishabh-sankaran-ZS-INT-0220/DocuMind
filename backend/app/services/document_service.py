@@ -54,6 +54,7 @@ async def create_document(
     user: User,
     file: UploadFile,
 ) -> Document:
+    """Create a Document row and store the uploaded file."""
     _validate_file_extension(file.filename)
     await _validate_file(file)
 
@@ -76,7 +77,7 @@ async def create_document(
         title=file.filename,
         original_filename=file.filename,
         content_type=file.content_type or _infer_mime_type(file.filename),
-        status="pending",
+        status="uploaded",
         owner_id=user.id,
     )
     db.add(document)
