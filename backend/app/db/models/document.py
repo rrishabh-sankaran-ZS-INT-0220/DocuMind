@@ -2,13 +2,13 @@
 
 import uuid
 from datetime import datetime
-
+from typing import List
 from sqlalchemy import ForeignKey, String, Text, Integer
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
-
+from backend.app.db.models.document_chunk import DocumentChunk
 
 class Document(Base):
     __tablename__ = "documents"
@@ -64,4 +64,9 @@ class Document(Base):
         "QASession",
         secondary="session_documents",
         back_populates="documents",
+    )
+    chunks: Mapped[List["DocumentChunk"]] = relationship(
+        "DocumentChunk",
+        back_populates="document",
+        cascade="all, delete-orphan",
     )

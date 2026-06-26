@@ -41,6 +41,22 @@ class Settings(BaseSettings):
     # CORS / frontend
     frontend_origin: str = Field("http://localhost:5173", env="FRONTEND_ORIGIN")
 
+    vector_top_k: int = Field(20, env="VECTOR_TOP_K")
+    bm25_top_k: int = Field(20, env="BM25_TOP_K")
+    hybrid_top_k: int = Field(10, env="HYBRID_TOP_K")
+    rrf_k: float = Field(60.0, env="RRF_K")
+
+    rerank_model_name: str = Field(
+        "BAAI/bge-reranker-large",
+        env="RERANK_MODEL_NAME",
+    )
+    rerank_device: str = Field(
+        "cpu",
+        env="RERANK_DEVICE",
+    )
+    rerank_top_k: int = Field(5, env="RERANK_TOP_K")
+    rerank_input_top_k: int = Field(20, env="RERANK_INPUT_TOP_K")
+
     class Config:
         env_file = ".env"
         case_sensitive = True
