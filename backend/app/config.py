@@ -41,6 +41,34 @@ class Settings(BaseSettings):
     # CORS / frontend
     frontend_origin: str = Field("http://localhost:5173", env="FRONTEND_ORIGIN")
 
+    # ------------------------------------------------------------------
+    # Retrieval (Qdrant / vector store)
+    # ------------------------------------------------------------------
+    qdrant_url: str = Field("http://localhost:6333", env="QDRANT_URL")
+    qdrant_api_key: str = Field("", env="QDRANT_API_KEY")
+    qdrant_collection_name: str = Field(
+        "documents_bge_large", env="QDRANT_COLLECTION_NAME"
+    )
+
+    # Embedding model used for query encoding
+    embedding_model_name: str = Field(
+        "BAAI/bge-large-en-v1.5", env="EMBEDDING_MODEL_NAME"
+    )
+
+    # Reranker model
+    reranker_model_name: str = Field(
+        "BAAI/bge-reranker-large", env="RERANKER_MODEL_NAME"
+    )
+
+    # Search parameters
+    vector_top_k: int = Field(10, ge=1, le=100, env="VECTOR_TOP_K")
+    bm25_top_k: int = Field(10, ge=1, le=100, env="BM25_TOP_K")
+    rerank_top_k: int = Field(5, ge=1, le=50, env="RERANK_TOP_K")
+    rrf_k: int = Field(60, ge=1, env="RRF_K")
+    search_timeout: int = Field(30, ge=1, env="SEARCH_TIMEOUT")
+
+
+
     class Config:
         env_file = ".env"
         case_sensitive = True

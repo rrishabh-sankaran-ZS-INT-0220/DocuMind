@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import List, Optional, Tuple
-
 import os
-import numpy as np
+from dataclasses import dataclass
+from typing import List, Optional
+from uuid import UUID
+
 import requests
-from sentence_transformers import CrossEncoder
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from backend.app.config import settings
 from backend.app.db.models.document import Document
-from backend.app.rag.embeddings import embed_texts, get_embedding_model
-from backend.app.rag.qdrant_client import get_qdrant_client
+from backend.app.rag.retrieval.base import RetrievedChunk
+from backend.app.rag.retrieval.hybrid_retriever import HybridRetriever
+from backend.app.rag.retrieval.bge_reranker import BGEReranker
+from backend.app.services.search_service import SearchService
 from backend.app.schemas.qa import (
     MCQOption,
     MCQOptionScore,
@@ -29,10 +30,7 @@ from backend.app.schemas.qa import (
 # Constants & Models
 # ---------------------------------------------------------------------------
 
-EMBEDDING_COLLECTION_DEFAULT = "documents_bge_large"
 RELEVANCE_THRESHOLD = 0.40
-
-RERANKER_MODEL_NAME = "BAAI/bge-reranker-large"
 
 # OpenRouter configuration
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
@@ -40,26 +38,21 @@ OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_MODEL = "anthropic/claude-3.5-haiku"  # change if you prefer another model
 
 
-@dataclass
-class RetrievedChunk:
-    text: str
-    page: int
-    section: Optional[str]
-    score: float
-    document_id: str
-    document_title: Optional[str] = None
-    chunk_index: Optional[int] = None
 
 
-# Lazy-load reranker
-_reranker_model: Optional[CrossEncoder] = None
+# Lazy-initialised default SearchService
+_search_service: Optional[SearchService] = None
 
 
-def get_reranker_model() -> CrossEncoder:
-    global _reranker_model
-    if _reranker_model is None:
-        _reranker_model = CrossEncoder(RERANKER_MODEL_NAME)
-    return _reranker_model
+def _get_search_service() -> SearchService:
+    """Return (and cache) a SearchService with default implementations."""
+    global _search_service
+    if _search_service is None:
+        _search_service = SearchService(
+            retriever=HybridRetriever(),
+            reranker=BGEReranker(),
+        )
+    return _search_service
 
 
 # ---------------------------------------------------------------------------
@@ -167,59 +160,7 @@ async def _load_document_titles(
     return id_to_title
 
 
-# ---------------------------------------------------------------------------
-# Retrieval: vector search from Qdrant
-# ---------------------------------------------------------------------------
-
-
-def _vector_search(
-    collection_name: str,
-    query_embedding: List[float],
-    top_k: int,
-) -> List[RetrievedChunk]:
-    client = get_qdrant_client()
-    search_result = client.search(
-        collection_name=collection_name,
-        query_vector=query_embedding,
-        limit=top_k * 2,  # oversample for later reranking
-        with_payload=True,
-    )
-
-    chunks: List[RetrievedChunk] = []
-    for point in search_result:
-        payload = point.payload or {}
-        chunks.append(
-            RetrievedChunk(
-                text=payload.get("text", ""),
-                page=int(payload.get("page", 0)),
-                section=payload.get("section"),
-                score=float(point.score),
-                document_id=str(payload.get("document_id", "")),
-                chunk_index=payload.get("chunk_index"),
-            )
-        )
-    return chunks
-
-
-# ---------------------------------------------------------------------------
-# Reranking
-# ---------------------------------------------------------------------------
-
-
-def _rerank_chunks(question: str, chunks: List[RetrievedChunk], top_k: int) -> List[RetrievedChunk]:
-    if not chunks:
-        return []
-
-    reranker = get_reranker_model()
-    pairs = [(question, c.text) for c in chunks]
-    scores = reranker.predict(pairs)
-    scores = list(map(float, scores))
-
-    for c, s in zip(chunks, scores):
-        c.score = s
-
-    chunks.sort(key=lambda c: c.score, reverse=True)
-    return chunks[:top_k]
+# (Retrieval and reranking moved to SearchService / HybridRetriever / BGEReranker)
 
 
 # ---------------------------------------------------------------------------
@@ -277,28 +218,21 @@ async def run_qa_pipeline(
     user_id: str,
     req: QARequest,
 ) -> QAResponse:
-    # 1. Embed query
-    query_embedding = embed_texts([req.question])[0]
-
-    # 2. Vector retrieval from Qdrant
-    collection_name = req.collection_name or EMBEDDING_COLLECTION_DEFAULT
-    retrieved = _vector_search(
-        collection_name=collection_name,
-        query_embedding=query_embedding,
+    # 1. Search via SearchService
+    search = _get_search_service()
+    reranked = await search.search(
+        query=req.question,
+        user_id=UUID(user_id),
         top_k=req.top_k,
     )
 
-    # If no chunks at all
-    if not retrieved:
+    if not reranked:
         return QAResponse(
             answer="I could not find relevant information in the documents.",
             confidence="not_found",
             score=0.0,
             sources=[],
         )
-
-    # 3. Rerank with cross-encoder
-    reranked = _rerank_chunks(req.question, retrieved, top_k=req.top_k)
 
     # Score is best reranker score
     best_score = reranked[0].score
@@ -359,17 +293,14 @@ async def run_mcq_pipeline(
     user_id: str,
     req: MCQRequest,
 ) -> MCQResponse:
-    # 1. Embed query
-    query_embedding = embed_texts([req.question])[0]
-
-    # 2. Vector retrieval
-    collection_name = req.collection_name or EMBEDDING_COLLECTION_DEFAULT
-    retrieved = _vector_search(
-        collection_name=collection_name,
-        query_embedding=query_embedding,
+    # 1. Search via SearchService
+    search = _get_search_service()
+    reranked = await search.search(
+        query=req.question,
+        user_id=UUID(user_id),
         top_k=req.top_k,
     )
-    if not retrieved:
+    if not reranked:
         return MCQResponse(
             selected_option_id=None,
             confidence="not_found",
@@ -377,8 +308,6 @@ async def run_mcq_pipeline(
             sources=[],
         )
 
-    # 3. Rerank
-    reranked = _rerank_chunks(req.question, retrieved, top_k=req.top_k)
     best_score = reranked[0].score
     confidence = _confidence_from_score(best_score)
 

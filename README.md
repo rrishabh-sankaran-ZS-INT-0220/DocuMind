@@ -1,5 +1,12 @@
 ﻿# DocuMind
 
+## Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for a detailed description of the system architecture, including the retrieval pipeline (SearchService → HybridRetriever → BGEReranker), dependency injection, configuration, and domain exceptions.
+
+The QA pipeline uses `SearchService` internally, but `SearchService` has no dependency on LLMs or prompt building.
+
+
 AI-powered RAG pipeline for querying PDFs, Word documents, and text files with document-grounded and LLM-assisted responses.
 
 ## Backend (FastAPI) Status
@@ -24,6 +31,13 @@ AI-powered RAG pipeline for querying PDFs, Word documents, and text files with d
 - [x] Implement semantic chunker with overlap (ackend/app/rag/pipeline/chunker.py)
 - [x] Add chunker tests (ackend/tests/test_chunker.py)
 - [ ] Wire Authlib and full OAuth login/redirect flow
+
+- [x] Implement SearchService with BaseRetriever/BaseReranker abstractions
+- [x] Implement HybridRetriever
+- [x] Implement BGEReranker
+- [x] Add search service tests
+- [x] Create ARCHITECTURE.md documenting retrieval lifecycle
+
 - [ ] Implement /auth/me with real user model + DB
 - [ ] Implement full document ingestion and RAG pipeline services
 - [ ] Implement QA endpoints (qa.py) wired to RAG pipeline

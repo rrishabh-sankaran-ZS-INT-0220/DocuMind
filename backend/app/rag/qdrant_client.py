@@ -5,17 +5,15 @@ from uuid import UUID
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
 
-
-QDRANT_URL = "http://localhost:6333"
-QDRANT_API_KEY: Optional[str] = None  # set if you secure Qdrant
+from backend.app.config import settings
 
 
 @lru_cache
 def get_qdrant_client() -> QdrantClient:
-    """Return a shared Qdrant client instance."""
+    """Return a shared Qdrant client instance configured from Settings."""
     return QdrantClient(
-        url=QDRANT_URL,
-        api_key=QDRANT_API_KEY,
+        url=settings.qdrant_url,
+        api_key=settings.qdrant_api_key or None,
     )
 
 
