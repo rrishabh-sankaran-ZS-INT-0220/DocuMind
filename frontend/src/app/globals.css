@@ -2,60 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-/* -- Theme variables --------------------------------------------------- */
 :root {
-  --background: #0a0a0f;
-  --foreground: #e2e2e9;
-  --accent: #6366f1;
-  --accent-soft: #16161f;
-  --border-subtle: #252533;
+  --background: #0d0d0d;
+  --foreground: #ececec;
+  --sidebar-bg: #0d0d0d;
+  --chat-bg: #1a1a1a;
+  --input-bg: #2a2a2a;
+  --border-subtle: #2a2a2a;
+  --border-strong: #3a3a3a;
+  --accent: #4f83f1;
+  --accent-hover: #3b6fd4;
+  --text-muted: #8a8a8a;
+  --text-secondary: #b0b0b0;
+  --hover-bg: #1f1f1f;
+  --active-bg: #252525;
+  --sidebar-width: 260px;
 }
 
-/* -- Base reset -------------------------------------------------------- */
-*,
-*::before,
-*::after {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
-html,
-body {
+html, body {
   margin: 0;
   padding: 0;
-}
-
-body {
-  background: var(--background);
+  height: 100%;
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* -- Tailwind utilities for theme vars --------------------------------- */
-.bg-background {
-  background-color: var(--background);
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #444; }
 
-.text-foreground {
-  color: var(--foreground);
-}
-
-/* -- Scrollbar styling ------------------------------------------------- */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-subtle);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #3a3a50;
-}
+/* Utility classes */
+.bg-background { background-color: var(--background); }
+.bg-sidebar { background-color: var(--sidebar-bg); }
+.bg-chat { background-color: var(--chat-bg); }
+.bg-input { background-color: var(--input-bg); }
+.text-foreground { color: var(--foreground); }
+.text-muted { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+.border-subtle { border-color: var(--border-subtle); }
