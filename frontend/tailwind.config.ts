@@ -10,12 +10,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Map Tailwind class names to CSS variables defined in globals.css.
-        // e.g. bg-background, text-foreground, border-border-subtle
         background: "var(--background)",
         foreground: "var(--foreground)",
-        "accent-soft": "var(--accent-soft)",
+        sidebar: "var(--sidebar-bg)",
+        "chat-bg": "var(--chat-bg)",
+        "input-bg": "var(--input-bg)",
         "border-subtle": "var(--border-subtle)",
+        "accent-soft": "var(--accent)",
+        muted: "var(--text-muted)",
+      },
+      animation: {
+        bounce: "bounce 1s infinite",
       },
     },
   },
