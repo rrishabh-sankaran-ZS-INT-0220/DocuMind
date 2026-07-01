@@ -1,11 +1,13 @@
 "use client";
 
 import { UploadButton } from "./UploadButton";
+import { VoiceButton } from "./VoiceButton";
 import { SendButton } from "./SendButton";
 
 export interface ComposerToolbarProps {
   onUpload: (file: File) => void;
   isUploading: boolean;
+  onVoice?: () => void;
   onSend: () => void;
   disabledSend: boolean;
 }
@@ -13,6 +15,7 @@ export interface ComposerToolbarProps {
 export function ComposerToolbar({
   onUpload,
   isUploading,
+  onVoice,
   onSend,
   disabledSend,
 }: ComposerToolbarProps) {
@@ -31,7 +34,10 @@ export function ComposerToolbar({
         </button>
       </div>
 
-      <SendButton onSend={onSend} disabled={disabledSend} />
+      <div className="flex items-center gap-2.5">
+        <VoiceButton onVoice={onVoice} disabled={isUploading} />
+        <SendButton onSend={onSend} disabled={disabledSend} />
+      </div>
     </div>
   );
 }

@@ -31,6 +31,10 @@ export function ChatComposer({
     onUpload(file);
   };
 
+  const handleVoice = () => {
+    // Placeholder for future voice capture / speech-to-text integration.
+  };
+
   const handleRemoveAttachment = () => {
     setAttachment({ fileName: null });
   };
@@ -65,6 +69,7 @@ export function ChatComposer({
           <ComposerToolbar
             onUpload={handleUpload}
             isUploading={isUploading}
+            onVoice={handleVoice}
             onSend={handleSend}
             disabledSend={disabledSend}
           />

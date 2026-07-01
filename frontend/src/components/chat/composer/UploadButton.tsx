@@ -1,7 +1,6 @@
 "use client";
 
 import { ChangeEvent, useRef } from "react";
-import { IconButton } from "@/components/ui/icon-button";
 
 export interface UploadButtonProps {
   onUpload: (file: File) => void;
@@ -24,19 +23,23 @@ export function UploadButton({ onUpload, disabled }: UploadButtonProps) {
 
   return (
     <>
-      <IconButton
+      <button
+        type="button"
         aria-label="Attach document"
         onClick={handleAttachClick}
         disabled={disabled}
         className="
+          inline-flex
           h-10
           w-10
+          items-center
+          justify-center
           rounded-full
           border
-          border-[#3A3A3A]
-          bg-[#262626]
+          border-[#D1D5DB]
+          bg-[#FFFFFF]
           text-[#FFFFFF]
-          hover:bg-[#303030]
+          hover:bg-[#b3b3b3]
           hover:border-[#4A4A4A]
           disabled:opacity-40
           disabled:cursor-not-allowed
@@ -62,7 +65,7 @@ export function UploadButton({ onUpload, disabled }: UploadButtonProps) {
             strokeLinejoin="round"
           />
         </svg>
-      </IconButton>
+      </button>
 
       <input
         ref={fileInputRef}
