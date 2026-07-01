@@ -48,7 +48,7 @@ export function ChatComposer({
           // Soft, non-modal elevation
           "shadow-[0_10px_30px_rgba(0,0,0,0.35)]",
           // Smooth visual transitions for border/shadow (focus state)
-          // "transition-[border-color,box-shadow] duration-150 ease-out",
+          "transition-[border-color,box-shadow] duration-150 ease-out",
           // Comfortable vertical padding
           "flex flex-col pt-4 pb-4 sm:pt-5 sm:pb-5"
         )}
