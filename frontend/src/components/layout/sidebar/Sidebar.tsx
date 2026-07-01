@@ -41,8 +41,8 @@ export default function Sidebar({
       className={`
         ${sidebarWidthClass}
         h-full
-        bg-[#0D0D0D]
-        text-white
+        bg-[var(--surface)]
+        text-[var(--text)]
         flex
         flex-col
         overflow-hidden
@@ -51,9 +51,9 @@ export default function Sidebar({
     >
       {/* Logo */}
 
-      <div className="shrink-0 border-b border-[#1E1E1E] px-4 py-4">
+      <div className="shrink-0 border-b border-[var(--border)] px-4 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black font-semibold">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--background)] text-[var(--text)] font-semibold">
             D
           </div>
 
@@ -110,7 +110,7 @@ export default function Sidebar({
 
         {!collapsed && (
           <div className="px-4 pt-6">
-            <p className="mb-2 text-xs uppercase tracking-wider text-[#6B7280]">
+            <p className="mb-2 text-xs uppercase tracking-wider text-[var(--text-muted)]">
               Collections
             </p>
 
@@ -120,17 +120,17 @@ export default function Sidebar({
                 w-full
                 rounded-xl
                 border
-                border-[#343434]
+                border-[var(--border)]
                 py-2
                 text-sm
-                hover:bg-[#202020]
+                hover:bg-[var(--background)]
               "
             >
               + New Collection
             </button>
 
             {collections.length === 0 && (
-              <p className="text-sm text-[#777]">
+              <p className="text-sm text-[var(--text-muted)]">
                 No collections yet
               </p>
             )}
@@ -150,14 +150,14 @@ export default function Sidebar({
 
         {!collapsed && (
           <div className="px-4 pt-8">
-            <p className="mb-2 text-xs uppercase tracking-wider text-[#6B7280]">
+            <p className="mb-2 text-xs uppercase tracking-wider text-[var(--text-muted)]">
               Recent Chats
             </p>
           </div>
         )}
 
         {sessions.length === 0 && !collapsed && (
-          <p className="px-4 text-sm text-[#777]">
+          <p className="px-4 text-sm text-[var(--text-muted)]">
             No conversations yet
           </p>
         )}
@@ -178,17 +178,17 @@ export default function Sidebar({
 
       {/* User */}
 
-      <div className="shrink-0 border-t border-[#222] p-4">
+      <div className="shrink-0 border-t border-[var(--border)] p-4">
         <div
           className="
             flex
             items-center
             gap-3
             rounded-xl
-            bg-[#171717]
+            bg-[var(--background)]
             p-3
             transition
-            hover:bg-[#222]
+            hover:bg-[var(--surface)]
           "
         >
           <div
@@ -199,7 +199,7 @@ export default function Sidebar({
               items-center
               justify-center
               rounded-full
-              bg-[#2B2B2B]
+              bg-[var(--surface)]
               font-semibold
             "
           >
@@ -212,7 +212,7 @@ export default function Sidebar({
                 {user?.email ?? "Guest"}
               </p>
 
-              <p className="text-xs text-[#777]">
+              <p className="text-xs text-[var(--text-muted)]">
                 Account
               </p>
             </div>
@@ -242,7 +242,7 @@ function SidebarActionItem({
       className="w-full px-2"
       onClick={onClick}
     >
-      <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[13px] text-[#E5E7EB] hover:bg-[#2d2d2d] transition-colors duration-150">
+      <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[13px] text-[var(--text)] hover:bg-[var(--background)] transition-colors duration-150">
         <Icon className="h-4 w-4" />
         {!collapsed && <span>{label}</span>}
       </div>
@@ -276,8 +276,8 @@ function SidebarNavItem({
           "flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[13px]",
           "transition-all duration-150",
           active
-            ? "bg-[#1f1f1f] text-[#ECECEC] border-l-2 border-l-[#FFFFFF]"
-            : "text-[#A1A1AA] hover:bg-[#2d2d2d]",
+            ? "bg-[var(--surface)] text-[var(--text)] border-l-2 border-l-[var(--accent)]"
+            : "text-[var(--text-muted)] hover:bg-[var(--background)]",
         ].join(" ")}
       >
         <Icon className="h-4 w-4" />

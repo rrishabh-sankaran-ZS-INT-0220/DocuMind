@@ -17,7 +17,7 @@ export function ComposerToolbar({
   disabledSend,
 }: ComposerToolbarProps) {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex h-10 min-h-[40px] items-center justify-between gap-3">
       <div className="flex items-center gap-2.5">
         {/* Upload button */}
         <UploadButton onUpload={onUpload} disabled={isUploading} />
@@ -31,7 +31,6 @@ export function ComposerToolbar({
         </button>
       </div>
 
-      {/* Send button anchored bottom-right visually */}
       <SendButton onSend={onSend} disabled={disabledSend} />
     </div>
   );

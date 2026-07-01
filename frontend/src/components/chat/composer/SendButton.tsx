@@ -14,7 +14,7 @@ export function SendButton({ onSend, disabled }: SendButtonProps) {
       size="md"
       onClick={onSend}
       disabled={disabled}
-      className="min-w-[64px] justify-center"
+      className="h-10 min-w-[64px] justify-center"
     >
       Send
     </Button>

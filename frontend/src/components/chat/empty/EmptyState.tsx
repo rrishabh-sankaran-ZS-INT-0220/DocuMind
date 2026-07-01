@@ -50,11 +50,11 @@ export function EmptyState() {
           justify-center
           rounded-full
           border
-          border-[#343434]
-          bg-[#262626]
+          border-[var(--border)]
+          bg-[var(--surface)]
           text-3xl
           font-semibold
-          text-white
+          text-[var(--text)]
         "
       >
         DM
@@ -68,7 +68,7 @@ export function EmptyState() {
           text-6xl
           font-semibold
           tracking-tight
-          text-white
+          text-[var(--text)]
         "
       >
         How can I help you today?
@@ -81,7 +81,7 @@ export function EmptyState() {
           text-center
           text-2xl
           leading-10
-          text-[#9CA3AF]
+          text-[var(--text-muted)]
         "
       >
         Upload documents, ask questions, summarize research,
@@ -108,16 +108,16 @@ export function EmptyState() {
               className="
                 rounded-3xl
                 border
-                border-[#353535]
-                bg-[#262626]
+                border-[var(--border)]
+                bg-[var(--surface)]
                 p-7
                 text-left
 
                 transition-all
                 duration-200
 
-                hover:border-[#555]
-                hover:bg-[#2D2D2D]
+                hover:border-[var(--accent)]
+                hover:bg-[var(--background)]
               "
             >
               <Icon
@@ -125,7 +125,7 @@ export function EmptyState() {
                 className="mb-5 text-white"
               />
 
-              <h3 className="text-3xl font-semibold text-white">
+              <h3 className="text-3xl font-semibold text-[var(--text)]">
                 {item.title}
               </h3>
 
@@ -134,7 +134,7 @@ export function EmptyState() {
                   mt-3
                   text-lg
                   leading-8
-                  text-[#9CA3AF]
+                  text-[var(--text-muted)]
                 "
               >
                 {item.description}
@@ -152,7 +152,7 @@ export function EmptyState() {
           flex
           items-center
           gap-2
-          text-[#7C7C7C]
+          text-[var(--text-muted)]
         "
       >
         <Sparkles size={16} />

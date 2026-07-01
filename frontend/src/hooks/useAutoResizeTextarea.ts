@@ -18,8 +18,6 @@ export function useAutoResizeTextarea(
   const { maxHeight = 240 } = options;
 
   useLayoutEffect(() => {
-    console.log("Hook running", textareaRef.current, value);
-
     const textarea = textareaRef.current;
     if (!textarea) return;
 

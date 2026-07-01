@@ -180,10 +180,10 @@ export default function HomePage() {
   );
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#212121] text-[#ECECEC]">
+    <div className="min-h-full w-full overflow-hidden bg-[var(--background)] text-[var(--text)]">
       {/* Fixed Sidebar */}
       <aside
-        className="fixed left-0 top-0 z-50 h-screen border-r border-[#2A2A2A] bg-[#111111]"
+        className="fixed left-0 top-0 z-40 h-screen border-r border-[var(--border)] bg-[var(--surface)]"
         style={{ width: sidebarCollapsed ? 72 : 280 }}
       >
         <Sidebar
@@ -200,7 +200,7 @@ export default function HomePage() {
 
       {/* Main Chat Area */}
       <main
-        className="h-screen overflow-hidden"
+        className="min-h-full overflow-hidden"
         style={{
           marginLeft: sidebarCollapsed ? 72 : 280,
         }}

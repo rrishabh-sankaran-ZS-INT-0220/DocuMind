@@ -93,12 +93,11 @@ export default function MainChatArea({
     <main
       className="
         flex
-        h-[100dvh]
         min-h-0
         flex-1
         flex-col
         overflow-hidden
-        bg-[#212121]
+        bg-[var(--background)]
       "
     >
       {/* ================= Messages ================= */}
@@ -117,24 +116,13 @@ export default function MainChatArea({
             mx-auto
             w-full
             max-w-4xl
-
-            px-8
-
+            px-6
             pt-10
-
             pb-12
           "
         >
           {isEmpty ? (
-            <div
-              className="
-                flex
-                min-h-[calc(100dvh-260px)]
-                items-center
-                justify-center
-                -translate-y-6
-              "
-            >
+            <div className="min-h-full">
               <EmptyState />
             </div>
           ) : (
@@ -171,18 +159,18 @@ export default function MainChatArea({
             rounded-full
 
             border
-            border-[#404040]
+            border-[var(--border)]
 
-            bg-[#2B2B2B]
+            bg-[var(--surface)]
 
-            text-white
+            text-[var(--text)]
 
             shadow-lg
 
             transition-all
             duration-200
 
-            hover:bg-[#383838]
+            hover:bg-[var(--card)]
           "
         >
           ↓
@@ -191,25 +179,8 @@ export default function MainChatArea({
 
       {/* ================= Composer ================= */}
 
-      <div
-        className="
-          shrink-0
-          border-[#2F2F2F]
-
-          bg-[#212121]
-        "
-      >
-        <div
-          className="
-            mx-auto
-            w-full
-            max-w-4xl
-
-            px-8
-
-            py-6
-          "
-        >
+      <div className="shrink-0 border-t border-[var(--border)] bg-[var(--background)]">
+        <div className="mx-auto w-full max-w-4xl px-6 py-6">
           <ChatComposer
             question={question}
             setQuestion={setQuestion}

@@ -20,12 +20,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className + " min-h-screen bg-[#0d0d0d] text-[#ECECEC]"}>
+      <body className={inter.className + " min-h-screen bg-[var(--background)] text-[var(--text)]"}>
         <ThemeProvider>
           <Providers>
             <div className="flex min-h-screen flex-col">
               {/* Global Header */}
-              <header className="border-b border-[#3A3A3A] bg-[#141414]">
+              <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--surface)]">
                 <div className="flex items-center justify-between px-4 py-3 sm:px-6">
                   <Link href="/" className="flex items-center gap-2">
                     <Image
@@ -35,10 +35,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       height={LOGO.height}
                     />
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold tracking-tight text-[#ECECEC]">
+                      <span className="text-sm font-semibold tracking-tight text-[var(--text)]">
                         DocuMind
                       </span>
-                      <span className="text-xs text-[#A1A1AA]">
+                      <span className="text-xs text-[var(--text-muted)]">
                         AI workspace for document intelligence
                       </span>
                     </div>
@@ -48,7 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </header>
 
               {/* Main content area (Sidebar + Workspace) */}
-              <main className="flex flex-1 bg-[#0d0d0d]">
+              <main className="flex flex-1 bg-[var(--background)]">
                 {children}
               </main>
             </div>
