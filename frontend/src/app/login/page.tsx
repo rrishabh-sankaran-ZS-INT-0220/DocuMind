@@ -1,11 +1,16 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { apiClient } from "../../lib/api";
 import { Button } from "@/components/ui/button";
 import { BrandAvatar } from "@/constants/BrandAvatar";
 import { motion } from "framer-motion";
+import { useAuth } from "@/context/auth-context";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { setAccessToken, setRefreshToken } = useAuth();
+
   const handleGoogleLogin = async () => {
     try {
       const res = await apiClient.post("/auth/google/login", {
@@ -18,6 +23,28 @@ export default function LoginPage() {
       alert("Unable to start Google login. Please try again.");
     }
   };
+
+  const handleDevLogin = async () => {
+    try {
+      const res = await apiClient.post("/auth/dev-login");
+
+      const { access_token, refresh_token } = res.data;
+
+      // Reuse existing token storage logic
+      setAccessToken(access_token);
+      setRefreshToken(refresh_token);
+
+      // Redirect to main messaging UI
+      router.replace("/");
+    } catch (err) {
+      console.error("Dev login failed", err);
+      alert("Unable to sign in as developer. Check backend ENABLE_DEV_LOGIN.");
+    }
+  };
+
+  const enableDevLogin =
+    typeof process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN !== "undefined" &&
+    process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === "true";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4">
@@ -49,6 +76,19 @@ export default function LoginPage() {
         >
           Continue with Google
         </Button>
+
+        {enableDevLogin && (
+          <div className="mt-4">
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full"
+              onClick={handleDevLogin}
+            >
+              Continue as Developer
+            </Button>
+          </div>
+        )}
       </motion.div>
     </div>
   );

@@ -9,6 +9,7 @@ from backend.app.config import settings
 class OAuthProvider(str, Enum):
     GOOGLE = "google"
     GITHUB = "github"
+    DEVELOPMENT = "development"
 
 
 # Google OAuth2 / OIDC endpoints
@@ -42,5 +43,5 @@ def parse_oauth_userinfo(provider: OAuthProvider, raw_data: dict[str, Any]) -> d
             "picture": raw_data.get("picture"),
         }
 
-    # Placeholder for other providers (GitHub) in future
+    # Placeholder for other providers (GitHub, development) in future
     return {"provider": provider.value, "raw": raw_data}

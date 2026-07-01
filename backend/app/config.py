@@ -8,11 +8,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 print(PROJECT_ROOT)
 
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
         case_sensitive=True,
-        extra="ignore", 
+        extra="ignore",
     )
 
     # ------------------------------------------------------------------
@@ -21,6 +22,20 @@ class Settings(BaseSettings):
     app_name: str = Field(default="DocuMind Backend", alias="APP_NAME")
     environment: str = Field(default="development", alias="ENVIRONMENT")
     api_v1_prefix: str = "/api/v1"
+
+    # Development-only auth features
+    enable_dev_login: bool = Field(
+        default=False,
+        alias="ENABLE_DEV_LOGIN",
+    )
+    dev_login_email: str = Field(
+        default="developer@documind.dev",
+        alias="DEV_LOGIN_EMAIL",
+    )
+    dev_login_name: str = Field(
+        default="Developer",
+        alias="DEV_LOGIN_NAME",
+    )
 
     # ------------------------------------------------------------------
     # Security / JWT
@@ -158,28 +173,18 @@ class Settings(BaseSettings):
     @property
     def async_db_url(self) -> str:
         """Async SQLAlchemy database URL."""
+        # Prefer DATABASE_URL if provided
         if self.database_url:
             return self.database_url
 
         return (
-            f"postgresql+asyncpg://"
-            f"{self.db_user}:{self.db_password}"
-            f"@{self.db_host}:{self.db_port}/{self.db_name}"
-        )
-
-    @property
-    def sync_db_url(self) -> str:
-        """Synchronous database URL for Alembic."""
-        return (
-            f"postgresql://"
-            f"{self.db_user}:{self.db_password}"
+            f"postgresql+asyncpg://{self.db_user}:{self.db_password}"
             f"@{self.db_host}:{self.db_port}/{self.db_name}"
         )
 
 
 @lru_cache
 def get_settings() -> Settings:
-    """Return cached application settings."""
     return Settings()
 
 

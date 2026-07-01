@@ -1,48 +1,22 @@
 "use client";
 
-import { ArrowUp, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-interface Props {
-  disabled: boolean;
-  loading?: boolean;
-  onClick: () => void;
+export interface SendButtonProps {
+  onSend: () => void;
+  disabled?: boolean;
 }
 
-export function SendButton({
-  disabled,
-  loading = false,
-  onClick,
-}: Props) {
+export function SendButton({ onSend, disabled }: SendButtonProps) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="primary"
+      size="md"
+      onClick={onSend}
       disabled={disabled}
-      onClick={onClick}
-      className={`
-        flex
-        h-11
-        w-11
-        items-center
-        justify-center
-        rounded-full
-        transition-all
-        duration-200
-
-        ${
-          disabled
-            ? "bg-[#3A3A3A] text-[#777777] cursor-not-allowed"
-            : "bg-white text-black hover:scale-[1.05] active:scale-95"
-        }
-      `}
+      className="min-w-[64px] justify-center"
     >
-      {loading ? (
-        <Loader2
-          className="animate-spin"
-          size={18}
-        />
-      ) : (
-        <ArrowUp size={18} strokeWidth={2.5} />
-      )}
-    </button>
+      Send
+    </Button>
   );
 }

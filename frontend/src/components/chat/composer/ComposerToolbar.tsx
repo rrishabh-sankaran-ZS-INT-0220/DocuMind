@@ -1,65 +1,38 @@
 "use client";
 
-import {
-  Paperclip,
-  Globe,
-  Mic,
-} from "lucide-react";
+import { UploadButton } from "./UploadButton";
+import { SendButton } from "./SendButton";
 
-interface ComposerToolbarProps {
-  disabled?: boolean;
-  onAttach: () => void;
+export interface ComposerToolbarProps {
+  onUpload: (file: File) => void;
+  isUploading: boolean;
+  onSend: () => void;
+  disabledSend: boolean;
 }
 
 export function ComposerToolbar({
-  disabled,
-  onAttach,
+  onUpload,
+  isUploading,
+  onSend,
+  disabledSend,
 }: ComposerToolbarProps) {
-  const buttonClass = `
-    flex
-    h-9
-    w-9
-    items-center
-    justify-center
-    rounded-full
-    text-[#9CA3AF]
-    transition-all
-    duration-200
-    hover:bg-[#3A3A3A]
-    hover:text-white
-    disabled:opacity-50
-    disabled:cursor-not-allowed
-  `;
-
   return (
-    <div className="flex items-center gap-1">
-      <button
-        type="button"
-        onClick={onAttach}
-        disabled={disabled}
-        className={buttonClass}
-        title="Upload document"
-      >
-        <Paperclip size={18} />
-      </button>
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2.5">
+        {/* Upload button */}
+        <UploadButton onUpload={onUpload} disabled={isUploading} />
 
-      <button
-        type="button"
-        disabled
-        className={buttonClass}
-        title="Web Search (Coming Soon)"
-      >
-        <Globe size={18} />
-      </button>
+        {/* Collection selector placeholder */}
+        <button
+          type="button"
+          className="hidden text-xs text-[#A1A1AA] hover:text-[#ECECEC]"
+        >
+          {/* Future: collection selector */}
+        </button>
+      </div>
 
-      <button
-        type="button"
-        disabled
-        className={buttonClass}
-        title="Voice (Coming Soon)"
-      >
-        <Mic size={18} />
-      </button>
+      {/* Send button anchored bottom-right visually */}
+      <SendButton onSend={onSend} disabled={disabledSend} />
     </div>
   );
 }

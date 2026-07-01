@@ -1,27 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
-
-import { ChatTextarea } from "./ChatTextarea";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { AttachmentChip } from "./AttachmentChip";
+import { PromptTextarea } from "./PromptTextarea";
 import { ComposerToolbar } from "./ComposerToolbar";
-import { AttachedFileChip } from "./AttachedFileChip";
-import { SendButton } from "./SendButton";
-import { UploadStatus } from "./UploadStatus";
-
-interface ChatComposerProps {
-  question: string;
-  setQuestion: (value: string) => void;
-
-  isAsking: boolean;
-
-  onAsk: () => void;
-
-  onUpload: (file: File) => void;
-
-  isUploading: boolean;
-
-  uploadStatus?: string;
-}
+import type { ChatComposerProps, AttachmentState } from "./types";
 
 export function ChatComposer({
   question,
@@ -32,154 +16,81 @@ export function ChatComposer({
   isUploading,
   uploadStatus,
 }: ChatComposerProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [attachment, setAttachment] = useState<AttachmentState>({
+    fileName: null,
+  });
 
-  const [attachedFile, setAttachedFile] =
-    useState<File | null>(null);
+  const disabledSend = !question.trim() || isAsking;
 
-  function openFileDialog() {
-    fileInputRef.current?.click();
-  }
+  const handleSend = () => {
+    onAsk();
+  };
 
-  function handleFileSelected(
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    setAttachedFile(file);
-
+  const handleUpload = (file: File) => {
+    // Update local attachment state and delegate upload
+    setAttachment({ fileName: file.name });
     onUpload(file);
-  }
+  };
 
-  function removeAttachment() {
-    setAttachedFile(null);
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }
-
-  const disabled =
-    isAsking ||
-    (
-      question.trim().length === 0 &&
-      attachedFile === null
-    );
+  const handleRemoveAttachment = () => {
+    setAttachment({ fileName: null });
+  };
 
   return (
-    <div className="flex flex-col gap-3">
-
-      {/* Composer */}
-
+    <div className="flex flex-col gap-2">
+      {/* Floating composer card */}
       <div
-        className="
-          flex
-          flex-col
-
-          rounded-[32px]
-
-          border
-
-          border-[#4A4A4A]
-
-          bg-[#2B2B2B]
-
-          shadow-[0_12px_40px_rgba(0,0,0,.35)]
-
-          transition-all
-
-          duration-200
-
-          ease-out
-
-          focus-within:border-[#666666]
-        "
+        className={cn(
+          // Centered, responsive floating width
+          "mx-auto w-full max-w-[880px] px-3 sm:px-4 md:px-6",
+          // Rounded container with subtle border and background
+          "rounded-[30px] border border-[#3A3A3A]/60 bg-[#1C1C1C]",
+          // Soft, non-modal elevation
+          "shadow-[0_10px_30px_rgba(0,0,0,0.35)]",
+          // Smooth visual transitions for border/shadow (focus state)
+          // "transition-[border-color,box-shadow] duration-150 ease-out",
+          // Comfortable vertical padding
+          "flex flex-col pt-4 pb-4 sm:pt-5 sm:pb-5"
+        )}
       >
-
-        {/* Text Area */}
-
-        <div
-          className="
-            px-6
-
-            pt-5
-
-            pb-3
-          "
-        >
-          <ChatTextarea
+        {/* Content area: textarea + attached file chip */}
+        <div className="flex flex-col flex-1 gap-3 px-1 sm:px-2">
+          <PromptTextarea
             value={question}
             onChange={setQuestion}
-            onSubmit={onAsk}
+            onSend={handleSend}
             disabled={isAsking}
           />
-        </div>
 
-        {/* Attachment */}
-
-        {attachedFile && (
-
-          <div className="px-6 pb-3">
-
-            <AttachedFileChip
-              file={attachedFile}
-              onRemove={removeAttachment}
+          {attachment.fileName && (
+            <AttachmentChip
+              fileName={attachment.fileName}
+              onRemove={handleRemoveAttachment}
             />
-
-          </div>
-
-        )}
-
-        {/* Toolbar */}
-
-        <div
-          className="
-            flex
-
-            items-center
-
-            justify-between
-
-            border-t
-
-            border-[#3B3B3B]
-
-            px-5
-
-            py-4
-          "
-        >
-
-          <ComposerToolbar
-            disabled={isUploading}
-            onAttach={openFileDialog}
-          />
-
-          <SendButton
-            disabled={disabled}
-            loading={isAsking}
-            onClick={onAsk}
-          />
-
+          )}
         </div>
 
+        {/* Toolbar row, visually attached via whitespace (no divider) */}
+        <div className="mt-3">
+          <ComposerToolbar
+            onUpload={handleUpload}
+            isUploading={isUploading}
+            onSend={handleSend}
+            disabledSend={disabledSend}
+          />
+        </div>
       </div>
 
-      <UploadStatus
-        uploading={isUploading}
-        status={uploadStatus}
-      />
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".pdf,.doc,.docx,.txt,.md"
-        className="hidden"
-        onChange={handleFileSelected}
-      />
-
+      {/* Status / hints row aligned with composer */}
+      <div className="mx-auto flex w-full max-w-[880px] items-center justify-between px-3 sm:px-4 md:px-6 text-xs text-[#A1A1AA]">
+        <span>Enter to send · Shift+Enter for newline</span>
+        {uploadStatus && (
+          <span>
+            {isUploading ? "Uploading: " : ""}
+            {uploadStatus}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

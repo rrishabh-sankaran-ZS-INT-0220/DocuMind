@@ -54,8 +54,7 @@ export default function MainChatArea({
 }: MainChatAreaProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  const [showScrollButton, setShowScrollButton] =
-    useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   const isEmpty = messages.length === 0;
 
@@ -66,10 +65,7 @@ export default function MainChatArea({
 
     viewport.scrollTo({
       top: viewport.scrollHeight,
-      behavior:
-        messages.length > 2
-          ? "smooth"
-          : "instant",
+      behavior: messages.length > 2 ? "smooth" : "instant",
     });
   }, [messages, isAsking]);
 
@@ -79,9 +75,7 @@ export default function MainChatArea({
     if (!viewport) return;
 
     const distance =
-      viewport.scrollHeight -
-      viewport.scrollTop -
-      viewport.clientHeight;
+      viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
 
     setShowScrollButton(distance > 300);
   }, []);
@@ -97,19 +91,12 @@ export default function MainChatArea({
     <main
       className="
         relative
-
         flex
-
         h-[100dvh]
-
         min-h-0
-
         flex-1
-
         flex-col
-
         overflow-hidden
-
         bg-[#212121]
       "
     >
@@ -120,24 +107,17 @@ export default function MainChatArea({
         onScroll={handleScroll}
         className="
           flex-1
-
           overflow-y-auto
-
           overflow-x-hidden
         "
       >
         <div
           className="
             mx-auto
-
             w-full
-
             max-w-4xl
-
             px-8
-
             pt-10
-
             pb-56
           "
         >
@@ -145,13 +125,9 @@ export default function MainChatArea({
             <div
               className="
                 flex
-
                 min-h-[calc(100dvh-220px)]
-
                 items-center
-
                 justify-center
-
                 -translate-y-6
               "
             >
@@ -159,9 +135,7 @@ export default function MainChatArea({
             </div>
           ) : (
             <>
-              <MessageViewport
-                messages={messages}
-              />
+              <MessageViewport messages={messages} />
 
               {isAsking && (
                 <div className="mt-6">
@@ -180,39 +154,22 @@ export default function MainChatArea({
           onClick={scrollToBottom}
           className="
             absolute
-
             bottom-40
-
             right-8
-
             z-30
-
             flex
-
             h-11
-
             w-11
-
             items-center
-
             justify-center
-
             rounded-full
-
             border
-
             border-[#404040]
-
             bg-[#2B2B2B]
-
             text-white
-
             shadow-lg
-
             transition-all
-
             duration-200
-
             hover:bg-[#383838]
           "
         >
@@ -225,44 +182,27 @@ export default function MainChatArea({
       <div
         className="
           sticky
-
           bottom-0
-
           z-20
-
           bg-[#212121]/95
-
           backdrop-blur-xl
-
           before:absolute
-
           before:left-0
-
           before:right-0
-
           before:top-0
-
           before:h-8
-
           before:bg-gradient-to-t
-
           before:from-[#212121]
-
           before:to-transparent
         "
       >
         <div
           className="
             mx-auto
-
             w-full
-
             max-w-4xl
-
             px-8
-
             pb-8
-
             pt-4
           "
         >

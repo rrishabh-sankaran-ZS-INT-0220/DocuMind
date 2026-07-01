@@ -14,6 +14,7 @@ class UserBase(BaseModel):
 
 class User(UserBase):
     id: str
+    provider: str | None = None
 
 
 class UserInDB(UserBase):
@@ -29,3 +30,10 @@ class OAuthLoginRequest(BaseModel):
 class OAuthCallbackQuery(BaseModel):
     code: str
     state: str
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    user: User

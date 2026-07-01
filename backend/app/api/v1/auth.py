@@ -1,6 +1,7 @@
 ﻿from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+import secrets
 
 from backend.app.config import settings
 from backend.app.core.oauth import OAuthProvider
@@ -9,6 +10,7 @@ from backend.app.schemas.auth import (
     OAuthCallbackQuery,
     OAuthLoginRequest,
     User as UserSchema,
+    AuthResponse,
 )
 from backend.app.services.auth_service import (
     build_google_oauth_login_url,
@@ -31,7 +33,12 @@ async def google_login(payload: OAuthLoginRequest) -> JSONResponse:
             detail="Invalid provider",
         )
 
-    redirect_url = build_google_oauth_login_url()
+    # Generate a state value for CSRF protection and include it in the URL.
+    # For a production system, you would typically persist this state
+    # (e.g., in a session or signed cookie) and validate it in the callback.
+    state = secrets.token_urlsafe(32)
+
+    redirect_url = build_google_oauth_login_url(state=state)
     return JSONResponse({"authorization_url": redirect_url})
 
 
@@ -54,8 +61,12 @@ async def google_callback(
             detail="Missing authorization code",
         )
 
+    # NOTE: query.state is parsed/required by OAuthCallbackQuery.
+    # At this point, you could validate it against whatever you stored when
+    # generating `state` in google_login, if you add persistence.
+
     try:
-        userinfo = await exchange_code_and_get_userinfo(query.code)
+        userinfo = exchange_code_and_get_userinfo(query.code)
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -85,6 +96,49 @@ async def google_callback(
         f"?access_token={access_token}&refresh_token={refresh_token}"
     )
     return RedirectResponse(url=callback_url, status_code=status.HTTP_302_FOUND)
+
+
+@router.post("/dev-login", response_model=AuthResponse)
+async def dev_login(
+    db: AsyncSession = Depends(get_db),
+):
+    """Development-only login that mimics a successful Google OAuth login.
+
+    This endpoint MUST NOT be usable in production.
+    """
+    if not settings.enable_dev_login:
+        # Explicitly forbid in non-development environments
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Development login is disabled.",
+        )
+
+    # Backend-owned developer identity
+    email = settings.dev_login_email
+    full_name = settings.dev_login_name
+
+    # Upsert user with a development provider
+    user = await upsert_oauth_user(
+        db=db,
+        provider=OAuthProvider.DEVELOPMENT,
+        email=email,
+        full_name=full_name,
+    )
+
+    # Issue tokens using the existing helper
+    access_token, refresh_token = issue_tokens_for_user(user)
+
+    return AuthResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        user=UserSchema(
+            id=str(user.id),
+            email=user.email,
+            full_name=user.full_name,
+            provider=user.provider,
+        ),
+    )
 
 
 @router.get("/me", response_model=UserSchema)

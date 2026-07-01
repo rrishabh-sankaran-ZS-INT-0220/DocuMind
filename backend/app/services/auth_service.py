@@ -1,6 +1,7 @@
 from typing import Any, Tuple
 from urllib.parse import urlencode
 
+import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -32,23 +33,37 @@ def build_google_oauth_login_url(state: str | None = None) -> str:
     return f"{GOOGLE_AUTHORIZATION_ENDPOINT}?{urlencode(query)}"
 
 
-async def exchange_code_and_get_userinfo(code: str) -> dict[str, Any]:
-    """Exchange authorization code for tokens and fetch Google userinfo."""
+def exchange_code_and_get_userinfo(code: str) -> dict[str, Any]:
+    """Exchange authorization code for tokens and fetch Google userinfo.
+
+    Uses Authlib's OAuth2Client for the code -> token exchange, then performs
+    a plain HTTPX request to the userinfo endpoint with a Bearer token.
+    """
     client = get_google_oauth_client()
 
-    # Exchange code for token
-    token = await client.fetch_token(
+    # Exchange authorization code for token (OAuth2 token)
+    token = client.fetch_token(
         GOOGLE_TOKEN_ENDPOINT,
         code=code,
         grant_type="authorization_code",
     )
 
-    # Fetch userinfo
-    resp = await client.get(GOOGLE_USERINFO_ENDPOINT, token=token)
-    resp.raise_for_status()
-    data = resp.json()
+    # Authlib's OAuth2Client for HTTPX does not accept `token=` in .get().
+    # Instead, we call the userinfo endpoint via httpx with a Bearer token.
+    access_token = token.get("access_token")
+    if not access_token:
+        raise RuntimeError("Google token response did not contain access_token")
 
-    # Normalize
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+    }
+
+    with httpx.Client() as http_client:
+        resp = http_client.get(GOOGLE_USERINFO_ENDPOINT, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+
+    # Normalize provider-specific userinfo into our common shape
     return parse_oauth_userinfo(OAuthProvider.GOOGLE, data)
 
 
