@@ -7,7 +7,7 @@ export interface AttachmentChipProps {
 
 export function AttachmentChip({ fileName, onRemove }: AttachmentChipProps) {
   return (
-    <div className="mt-1 flex items-center justify-between rounded-full bg-[#262626] px-3 py-1 text-xs text-[#ECECEC]">
+    <div className="flex items-center justify-between rounded-full bg-[#262626] px-3 py-1 text-xs text-[#ECECEC]">
       <span className="flex items-center gap-2">
         <span>📄</span>
         <span className="truncate max-w-[260px]">{fileName}</span>
