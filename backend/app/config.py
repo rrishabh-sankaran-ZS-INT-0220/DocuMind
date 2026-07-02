@@ -207,6 +207,25 @@ class Settings(BaseSettings):
             f"@{self.db_host}:{self.db_port}/{self.db_name}"
         )
 
+    @property
+    def sync_db_url(self) -> str:
+        """Synchronous SQLAlchemy database URL for Alembic."""
+        # Prefer DATABASE_URL if provided
+        if self.database_url:
+            return (
+                self.database_url
+                .replace(
+                    "postgresql+asyncpg://",
+                    "postgresql+psycopg2://",
+                )
+            )
+
+        return (
+            f"postgresql+psycopg2://"
+            f"{self.db_user}:{self.db_password}"
+            f"@{self.db_host}:{self.db_port}"
+            f"/{self.db_name}"
+        )
 
 @lru_cache
 def get_settings() -> Settings:

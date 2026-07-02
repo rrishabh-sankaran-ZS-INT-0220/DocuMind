@@ -37,13 +37,11 @@ export function PromptTextarea({
       onKeyDown={handleKeyDown}
       placeholder="Message DocuMind..."
       className={cn(
-        "w-full bg-transparent text-[17px] leading-relaxed text-[#ECECEC]",
+        "w-full bg-transparent text-base leading-6 text-[#ECECEC]",
         "placeholder:text-[#A1A1AA]",
         "focus-visible:outline-none",
         "resize-none overflow-hidden",
-        // Vertical padding to visually center placeholder and text
-        "py-3 sm:py-3.5",
-        // Smooth but subtle height changes
+        "py-2.5",
         "transition-[height] duration-150 ease-out"
       )}
       rows={1}

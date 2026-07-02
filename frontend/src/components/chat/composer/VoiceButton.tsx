@@ -1,17 +1,18 @@
 "use client";
 
-import { ArrowUp } from "lucide-react";
+import { Mic } from "lucide-react";
 
-export interface SendButtonProps {
-  onSend: () => void;
+export interface VoiceButtonProps {
+  onVoice?: () => void;
   disabled?: boolean;
 }
 
-export function SendButton({ onSend, disabled }: SendButtonProps) {
+export function VoiceButton({ onVoice, disabled }: VoiceButtonProps) {
   return (
     <button
       type="button"
-      onClick={onSend}
+      aria-label="Voice input"
+      onClick={onVoice}
       disabled={disabled}
       className="
         inline-flex
@@ -21,20 +22,19 @@ export function SendButton({ onSend, disabled }: SendButtonProps) {
         justify-center
         rounded-full
         border
-        border-transparent
-        bg-[#2563EB]
-        text-white
+        border-[#2B2B2B]
+        bg-[#1A1A1A]
+        text-[#F5F5F5]
         transition-colors
-        hover:bg-[#3B82F6]
+        hover:bg-[#232323]
         focus-visible:outline-none
         focus-visible:ring-2
-        focus-visible:ring-[#1D4ED8]/40
+        focus-visible:ring-[#2F80ED]/25
         disabled:cursor-not-allowed
         disabled:opacity-60
       "
-      aria-label="Send message"
     >
-      <ArrowUp aria-hidden="true" size={18} strokeWidth={2.25} />
+      <Mic aria-hidden="true" size={18} strokeWidth={2.2} />
     </button>
   );
 }

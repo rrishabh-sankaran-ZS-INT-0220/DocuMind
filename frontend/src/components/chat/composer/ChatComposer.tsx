@@ -27,9 +27,12 @@ export function ChatComposer({
   };
 
   const handleUpload = (file: File) => {
-    // Update local attachment state and delegate upload
     setAttachment({ fileName: file.name });
     onUpload(file);
+  };
+
+  const handleVoice = () => {
+    // Placeholder for future voice capture / speech-to-text integration.
   };
 
   const handleRemoveAttachment = () => {
@@ -37,24 +40,18 @@ export function ChatComposer({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      {/* Floating composer card */}
+    <div className="flex flex-col gap-3">
       <div
         className={cn(
-          // Centered, responsive floating width
-          "mx-auto w-full max-w-[880px] px-3 sm:px-4 md:px-6",
-          // Rounded container with subtle border and background
-          "rounded-[30px] border border-[#3A3A3A]/60 bg-[#1C1C1C]",
-          // Soft, non-modal elevation
-          "shadow-[0_10px_30px_rgba(0,0,0,0.35)]",
-          // Smooth visual transitions for border/shadow (focus state)
-          "transition-[border-color,box-shadow] duration-150 ease-out",
-          // Comfortable vertical padding
-          "flex flex-col pt-4 pb-4 sm:pt-5 sm:pb-5"
+          "mx-auto w-full max-w-[880px]",
+          "rounded-[30px]",
+          "border border-[#3A3A3A]/60",
+          "bg-[#1C1C1C]",
+          "shadow-[0_8px_24px_rgba(0,0,0,0.25)]",
+          "overflow-hidden"
         )}
       >
-        {/* Content area: textarea + attached file chip */}
-        <div className="flex flex-col flex-1 gap-3 px-1 sm:px-2">
+        <div className="flex flex-col gap-3 px-5 py-4">
           <PromptTextarea
             value={question}
             onChange={setQuestion}
@@ -68,22 +65,20 @@ export function ChatComposer({
               onRemove={handleRemoveAttachment}
             />
           )}
-        </div>
 
-        {/* Toolbar row, visually attached via whitespace (no divider) */}
-        <div className="mt-3">
           <ComposerToolbar
             onUpload={handleUpload}
             isUploading={isUploading}
+            onVoice={handleVoice}
             onSend={handleSend}
             disabledSend={disabledSend}
           />
         </div>
       </div>
 
-      {/* Status / hints row aligned with composer */}
-      <div className="mx-auto flex w-full max-w-[880px] items-center justify-between px-3 sm:px-4 md:px-6 text-xs text-[#A1A1AA]">
+      <div className="mx-auto flex w-full max-w-[880px] items-center justify-between px-2 text-xs text-[#A1A1AA]">
         <span>Enter to send · Shift+Enter for newline</span>
+
         {uploadStatus && (
           <span>
             {isUploading ? "Uploading: " : ""}
