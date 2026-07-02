@@ -1,4 +1,6 @@
-﻿from fastapi import APIRouter, Depends, HTTPException, Request, status
+﻿import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,6 +30,7 @@ from backend.app.dependencies import get_current_user, to_user_schema
 from backend.app.db.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/google/login")
@@ -41,6 +44,11 @@ async def google_login(payload: OAuthLoginRequest) -> JSONResponse:
 
     state = generate_oauth_state()
     redirect_url = build_google_oauth_login_url(state=state)
+
+    logger.info(
+        "oauth_login_initiated",
+        extra={"event": "oauth_login_initiated", "provider": payload.provider.lower()},
+    )
 
     response = JSONResponse({"authorization_url": redirect_url})
     set_oauth_state_cookie(response, state)
@@ -61,6 +69,11 @@ async def google_callback(
     - Issues access + refresh JWTs
     - Redirects to frontend /auth/callback with tokens
     """
+    logger.info(
+        "oauth_callback_received",
+        extra={"event": "oauth_callback_received", "provider": OAuthProvider.GOOGLE.value},
+    )
+
     if not query.code:
         response = JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -71,6 +84,10 @@ async def google_callback(
 
     cookie_state = get_oauth_state_cookie(request)
     if not validate_oauth_state(cookie_state, query.state):
+        logger.warning(
+            "oauth_state_validation_failed",
+            extra={"event": "oauth_state_validation_failed", "provider": OAuthProvider.GOOGLE.value},
+        )
         response = JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"detail": "Invalid OAuth state"},
@@ -81,6 +98,10 @@ async def google_callback(
     try:
         userinfo = exchange_code_and_get_userinfo(query.code)
     except Exception as exc:
+        logger.exception(
+            "oauth_exchange_failed",
+            extra={"event": "oauth_exchange_failed", "provider": OAuthProvider.GOOGLE.value},
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"OAuth callback error: {exc}",
@@ -102,7 +123,17 @@ async def google_callback(
         full_name=full_name,
     )
 
+    logger.info(
+        "oauth_user_authenticated",
+        extra={"event": "oauth_user_authenticated", "user_id": str(user.id), "email": email},
+    )
+
     access_token, refresh_token = issue_tokens_for_user(user)
+
+    logger.info(
+        "oauth_callback_completed",
+        extra={"event": "oauth_callback_completed", "user_id": str(user.id)},
+    )
 
     callback_url = (
         f"{settings.frontend_origin}/auth/callback"

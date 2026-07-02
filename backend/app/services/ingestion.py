@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import List, Optional
 
@@ -90,7 +91,13 @@ async def ingest_document(db: AsyncSession, document_id) -> None:
     result = await db.execute(stmt)
     doc: Optional[Document] = result.scalar_one_or_none()
     if doc is None:
+        logger.warning("document_ingestion_skipped", extra={"event": "document_ingestion_skipped", "document_id": str(document_id)})
         return
+
+    logger.info(
+        "document_ingestion_started",
+        extra={"event": "document_ingestion_started", "document_id": str(doc.id), "owner_id": str(doc.owner_id)},
+    )
 
     doc.status = "processing"
     doc.error_message = None
@@ -99,6 +106,10 @@ async def ingest_document(db: AsyncSession, document_id) -> None:
 
     try:
         file_bytes = await _load_document_file(doc)
+        logger.info(
+            "document_ingestion_loaded",
+            extra={"event": "document_ingestion_loaded", "document_id": str(doc.id), "byte_size": len(file_bytes)},
+        )
         parsed = await _parse_file(file_bytes, doc.original_filename, doc.content_type)
 
         chunks = chunk_document(parsed)
@@ -140,7 +151,16 @@ async def ingest_document(db: AsyncSession, document_id) -> None:
         await db.commit()
         await db.refresh(doc)
 
+        logger.info(
+            "document_ingestion_completed",
+            extra={"event": "document_ingestion_completed", "document_id": str(doc.id), "chunk_count": count},
+        )
+
     except Exception as exc:
+        logger.exception(
+            "document_ingestion_failed",
+            extra={"event": "document_ingestion_failed", "document_id": str(doc.id), "error": str(exc)},
+        )
         doc.status = "failed"
         doc.error_message = str(exc)
         await db.commit()
