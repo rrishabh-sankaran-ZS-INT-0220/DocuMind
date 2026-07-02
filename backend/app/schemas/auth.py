@@ -29,7 +29,7 @@ class OAuthLoginRequest(BaseModel):
 
 class OAuthCallbackQuery(BaseModel):
     code: str
-    state: str
+    state: str | None = None
 
 
 class AuthResponse(BaseModel):
