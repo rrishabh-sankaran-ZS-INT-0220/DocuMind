@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import List
 
@@ -28,6 +29,7 @@ from backend.app.core.rate_limit import build_rate_limiter
 from backend.app.config import settings
 
 router = APIRouter(prefix="/qa", tags=["qa"])
+logger = logging.getLogger(__name__)
 qa_rate_limiter = build_rate_limiter(
     limit=settings.qa_rate_limit_requests,
     window_seconds=settings.qa_rate_limit_window_seconds,
@@ -157,10 +159,19 @@ async def ask_question(
 ) -> QAResponse:
     """Ask an open-ended question over ingested documents."""
     if not payload.question.strip():
+        logger.warning(
+            "qa_question_empty",
+            extra={"event": "qa_question_empty", "user_id": str(current_user.id)},
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Question must not be empty",
         )
+
+    logger.info(
+        "qa_question_received",
+        extra={"event": "qa_question_received", "user_id": str(current_user.id), "question_length": len(payload.question)},
+    )
 
     return await run_qa_pipeline(
         db=db,
@@ -177,15 +188,28 @@ async def mcq_question(
 ) -> MCQResponse:
     """Ask a multiple-choice question and score options."""
     if not payload.question.strip():
+        logger.warning(
+            "qa_mcq_question_empty",
+            extra={"event": "qa_mcq_question_empty", "user_id": str(current_user.id)},
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Question must not be empty",
         )
     if not payload.options:
+        logger.warning(
+            "qa_mcq_options_empty",
+            extra={"event": "qa_mcq_options_empty", "user_id": str(current_user.id)},
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one option is required",
         )
+
+    logger.info(
+        "qa_mcq_question_received",
+        extra={"event": "qa_mcq_question_received", "user_id": str(current_user.id), "option_count": len(payload.options)},
+    )
 
     return await run_mcq_pipeline(
         db=db,

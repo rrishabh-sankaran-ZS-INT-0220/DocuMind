@@ -1,4 +1,5 @@
-﻿import uuid
+﻿import logging
+import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +19,7 @@ from backend.app.core.rate_limit import build_rate_limiter
 from backend.app.config import settings
 
 router = APIRouter(prefix="/documents", tags=["documents"])
+logger = logging.getLogger(__name__)
 upload_rate_limiter = build_rate_limiter(
     limit=settings.upload_rate_limit_requests,
     window_seconds=settings.upload_rate_limit_window_seconds,
@@ -38,12 +40,25 @@ async def upload_document(
     Triggers async ingestion (parse → chunk → embed → Qdrant).
     """
 
+    logger.info(
+        "document_upload_received",
+        extra={"event": "document_upload_received", "user_id": str(current_user.id), "filename": file.filename},
+    )
+
     try:
         document = await create_document(db=db, user=current_user, file=file)
     except ValueError as exc:
+        logger.warning(
+            "document_upload_rejected",
+            extra={"event": "document_upload_rejected", "user_id": str(current_user.id), "filename": file.filename, "error": str(exc)},
+        )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     await enqueue_ingestion_job(str(document.id))
+    logger.info(
+        "document_upload_queued",
+        extra={"event": "document_upload_queued", "user_id": str(current_user.id), "document_id": str(document.id)},
+    )
     document.status = "queued"
     await db.commit()
     await db.refresh(document)
