@@ -24,8 +24,15 @@ from backend.app.schemas.qa import (
     QAMessageResponse,
 )
 from backend.app.services.rag_pipeline import run_qa_pipeline, run_mcq_pipeline
+from backend.app.core.rate_limit import build_rate_limiter
+from backend.app.config import settings
 
 router = APIRouter(prefix="/qa", tags=["qa"])
+qa_rate_limiter = build_rate_limiter(
+    limit=settings.qa_rate_limit_requests,
+    window_seconds=settings.qa_rate_limit_window_seconds,
+    limiter_name="qa",
+)
 
 
 # ----------------- Session management -----------------
@@ -146,6 +153,7 @@ async def ask_question(
     payload: QARequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    _rate_limit: None = Depends(qa_rate_limiter),
 ) -> QAResponse:
     """Ask an open-ended question over ingested documents."""
     if not payload.question.strip():

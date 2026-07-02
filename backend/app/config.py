@@ -83,6 +83,31 @@ class Settings(BaseSettings):
         alias="QDRANT_URL",
     )
 
+    redis_url: str = Field(
+        default="redis://localhost:6379/0",
+        alias="REDIS_URL",
+    )
+
+    qa_rate_limit_requests: int = Field(
+        default=10,
+        alias="QA_RATE_LIMIT_REQUESTS",
+    )
+
+    qa_rate_limit_window_seconds: int = Field(
+        default=60,
+        alias="QA_RATE_LIMIT_WINDOW_SECONDS",
+    )
+
+    upload_rate_limit_requests: int = Field(
+        default=5,
+        alias="UPLOAD_RATE_LIMIT_REQUESTS",
+    )
+
+    upload_rate_limit_window_seconds: int = Field(
+        default=60,
+        alias="UPLOAD_RATE_LIMIT_WINDOW_SECONDS",
+    )
+
     qdrant_api_key: str = Field(
         default="",
         alias="QDRANT_API_KEY",

@@ -14,8 +14,15 @@ from backend.app.services.document_service import (
 )
 from backend.app.services.ingestion import ingest_document
 from backend.app.dependencies import get_current_user
+from backend.app.core.rate_limit import build_rate_limiter
+from backend.app.config import settings
 
 router = APIRouter(prefix="/documents", tags=["documents"])
+upload_rate_limiter = build_rate_limiter(
+    limit=settings.upload_rate_limit_requests,
+    window_seconds=settings.upload_rate_limit_window_seconds,
+    limiter_name="upload",
+)
 
 
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
@@ -24,6 +31,7 @@ async def upload_document(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    _rate_limit: None = Depends(upload_rate_limiter),
 ) -> Document:
     """Upload a document for the authenticated user.
 
