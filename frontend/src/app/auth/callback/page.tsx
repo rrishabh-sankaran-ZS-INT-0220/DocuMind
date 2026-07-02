@@ -20,8 +20,8 @@ export default function AuthCallbackPage() {
         if (refreshToken) {
           setRefreshToken(refreshToken);
         }
-        // After successful login, go to main messaging UI
-        router.replace("/");
+        // After successful login, go to dashboard
+        router.replace("/dashboard");
       } catch (e) {
         console.error("Error setting tokens from callback", e);
         setError("Failed to complete sign-in. Please try again.");

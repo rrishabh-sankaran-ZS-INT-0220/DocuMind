@@ -92,6 +92,7 @@ export default function MainChatArea({
   return (
     <main
       className="
+        relative
         flex
         min-h-0
         flex-1
@@ -100,8 +101,6 @@ export default function MainChatArea({
         bg-[var(--background)]
       "
     >
-      {/* ================= Messages ================= */}
-
       <div
         ref={viewportRef}
         onScroll={handleScroll}
@@ -117,12 +116,12 @@ export default function MainChatArea({
             w-full
             max-w-4xl
             px-6
-            pt-10
+            pt-0
             pb-12
           "
         >
           {isEmpty ? (
-            <div className="min-h-full">
+            <div>
               <EmptyState />
             </div>
           ) : (
@@ -179,7 +178,7 @@ export default function MainChatArea({
 
       {/* ================= Composer ================= */}
 
-      <div className="shrink-0 border-t border-[var(--border)] bg-[var(--background)]">
+      <div className="shrink-0 border-[var(--border)] bg-[var(--background)]">
         <div className="mx-auto w-full max-w-4xl px-6 py-6">
           <ChatComposer
             question={question}

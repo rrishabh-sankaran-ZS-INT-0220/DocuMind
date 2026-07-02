@@ -1,222 +1,160 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/auth-context";
-import { apiClient } from "@/lib/api";
-import Sidebar from "@/components/layout/sidebar/Sidebar";
-import MainChatArea, { type ChatMessage } from "@/components/chat/MainChatArea";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { BrandAvatar } from "@/constants/BrandAvatar";
+import FeatureCard from "@/components/landing/FeatureCard";
+import Workflow from "@/components/landing/Workflow";
+import TechStack from "@/components/landing/TechStack";
+import UseCases from "@/components/landing/UseCases";
+import SiteFooter from "@/components/landing/SiteFooter";
 
-type SourceCitation = {
-  document_id: string;
-  chunk_text: string;
-  score: number;
-  page?: number;
-  section?: string;
-  title?: string;
-};
+const features = [
+  { title: "Document Understanding", description: "Upload PDFs, DOCX, Markdown and TXT files. Build an intelligent searchable knowledge base." },
+  { title: "AI Question Answering", description: "Ask questions in natural language. Receive contextual answers with citations." },
+  { title: "Document Comparison", description: "Compare multiple files. Detect similarities and differences." },
+  { title: "Smart Summaries", description: "Generate concise summaries of lengthy documents." },
+  { title: "Semantic Search", description: "Search by meaning instead of keywords using vector embeddings." },
+  { title: "Collections", description: "Organize documents into independent workspaces." },
+];
 
-export default function HomePage() {
+export default function LandingPage() {
   const router = useRouter();
-  const { user } = useAuth();
-
-  const [question, setQuestion] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isAsking, setIsAsking] = useState(false);
-  const [askError, setAskError] = useState<string | null>(null);
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(
-    null
-  );
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  const authGuard = (action: "ask" | "upload" | "session") => {
-    if (!user) {
-      const message =
-        action === "ask"
-          ? "Please sign in to ask questions."
-          : action === "upload"
-          ? "Please sign in to upload documents."
-          : "Please sign in to view your sessions.";
-      alert(message);
-      router.push("/login");
-      return false;
-    }
-    return true;
-  };
-
-  const handleAsk = useCallback(async () => {
-    const q = question.trim();
-    if (!q || isAsking) return;
-
-    if (!authGuard("ask")) return;
-
-    setQuestion("");
-    setAskError(null);
-    setMessages((prev) => [...prev, { role: "user", content: q }]);
-    setIsAsking(true);
-
-    try {
-      const { data } = await apiClient.post("/qa/ask", {
-        question: q,
-        collection_name: selectedCollectionId ?? undefined,
-      });
-
-      const sources = Array.isArray(data.sources) ? data.sources : [];
-      const citations: SourceCitation[] = sources.map((s: any) => ({
-        document_id: s.document_id,
-        chunk_text: s.snippet,
-        score: s.score,
-        page: s.page,
-        section: s.section,
-        title: s.document_title,
-      }));
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: data.answer ?? "",
-          citations,
-          confidence: data.confidence,
-        },
-      ]);
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Please try again.";
-      setAskError(msg);
-      console.error(err);
-    } finally {
-      setIsAsking(false);
-    }
-  }, [question, isAsking, selectedCollectionId, router, user]);
-
-  const handleUpload = useCallback(
-    async (file: File) => {
-      if (!file) return;
-      if (!authGuard("upload")) return;
-
-      setIsUploading(true);
-      setUploadStatus("Uploading...");
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const { data } = await apiClient.post("/documents/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-
-        setUploadStatus("Processing...");
-        let attempts = 0;
-
-        const docId = data.id;
-        const poll = setInterval(async () => {
-          attempts++;
-          try {
-            const res = await apiClient.get(`/documents/${docId}/status`);
-            const s = res.data;
-            if (s.status === "ready") {
-              clearInterval(poll);
-              setUploadStatus(`Ready: ${file.name}`);
-              setTimeout(() => setUploadStatus(null), 3000);
-              setIsUploading(false);
-            } else if (s.status === "failed") {
-              clearInterval(poll);
-              setUploadStatus(`Failed: ${s.error_message ?? "unknown error"}`);
-              setIsUploading(false);
-            } else if (attempts > 30) {
-              clearInterval(poll);
-              setUploadStatus("Still processing...");
-              setIsUploading(false);
-            }
-          } catch {
-            clearInterval(poll);
-            setUploadStatus("Status check failed.");
-            setIsUploading(false);
-          }
-        }, 2000);
-      } catch {
-        setUploadStatus("Upload failed.");
-        setIsUploading(false);
-      }
-    },
-    [router, user]
-  );
-
-  const handleSelectSession = useCallback(
-    async (sessionId: string | null) => {
-      if (!sessionId) {
-        setActiveSessionId(null);
-        setMessages([]);
-        return;
-      }
-
-      if (!authGuard("session")) return;
-
-      setActiveSessionId(sessionId);
-      try {
-        const { data } = await apiClient.get(`/qa/sessions/${sessionId}`);
-        const newMessages: ChatMessage[] = Array.isArray(data.messages)
-          ? data.messages.map((m: any) => ({
-              role: m.role,
-              content: m.content,
-              citations: [],
-              confidence: m.confidence,
-            }))
-          : [];
-        setMessages(newMessages);
-      } catch (err) {
-        console.error(err);
-      }
-    },
-    [router, user]
-  );
 
   return (
-    <div className="min-h-full w-full overflow-hidden bg-[var(--background)] text-[var(--text)]">
-      {/* Fixed Sidebar */}
-      <aside
-        className="fixed left-0 top-0 z-40 h-screen border-r border-[var(--border)] bg-[var(--surface)]"
-        style={{ width: sidebarCollapsed ? 72 : 280 }}
-      >
-        <Sidebar
-          activeSessionId={activeSessionId}
-          onSelectSession={handleSelectSession}
-          onNewChat={() => {
-            setMessages([]);
-            setActiveSessionId(null);
-            setQuestion("");
-          }}
-          collapsed={sidebarCollapsed}
-        />
-      </aside>
+    <div className="min-h-screen bg-[var(--background)] text-[var(--text)]">
+      <header className="sticky top-0 z-40 w-full backdrop-blur-sm">
+        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <BrandAvatar size={36} />
+            <div>
+              <p className="text-sm font-semibold">DocuMind</p>
+              <p className="text-xs text-[var(--text-muted)]">AI Knowledge Workspace</p>
+            </div>
+          </div>
 
-      {/* Main Chat Area */}
-      <main
-        className="min-h-full overflow-hidden"
-        style={{
-          marginLeft: sidebarCollapsed ? 72 : 280,
-        }}
-      >
-        <MainChatArea
-          question={question}
-          setQuestion={setQuestion}
-          messages={messages}
-          isAsking={isAsking}
-          onAsk={handleAsk}
-          onUpload={handleUpload}
-          isUploading={isUploading}
-          uploadStatus={uploadStatus ?? askError ?? undefined}
-          onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
-        />
+          <nav className="flex items-center gap-3">
+            <a href="#" className="rounded-md px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text)]">Documentation</a>
+            <a href="https://github.com" target="_blank" rel="noreferrer" className="rounded-md px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text)]">GitHub</a>
+            <button onClick={() => router.push('/login')} className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text)] hover:border-[var(--accent)]">Sign In</button>
+          </nav>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-[1400px] px-4 pb-16 sm:px-6">
+        {/* HERO */}
+        <section className="grid gap-8 py-12 lg:grid-cols-2 lg:items-center">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.36 }}>
+            <p className="inline-flex rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">AI Knowledge Workspace</p>
+            <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-tight text-[var(--text)] sm:text-5xl">Build a smarter<br/>Document AI Workspace.</h1>
+            <p className="mt-4 max-w-xl text-lg text-[var(--text-muted)]">Transform documents into an intelligent knowledge base. Ask natural language questions. Summarize long reports. Compare multiple documents. Retrieve citation-backed answers.</p>
+
+            <div className="mt-6 flex gap-3">
+              <Button variant="primary" size="lg" onClick={() => router.push('/login')}>Get Started</Button>
+              <Button variant="secondary" size="lg" className="hover:bg-gray-800/40 transition-colors" onClick={() => router.push('/login')}>Sign In</Button>
+            </div>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.36, delay: 0.06 }} className="flex items-center justify-center">
+            <div className="w-full max-w-md rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--card)] p-6 shadow-subtle">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-[var(--text)]">Try DocuMind</p>
+                  <p className="mt-2 text-sm text-[var(--text-muted)]">Sign in to upload documents and query your knowledge base.</p>
+                </div>
+                <div className="hidden h-16 w-28 rounded-md bg-[var(--surface)] p-2 text-xs text-[var(--text-muted)] sm:block">
+                  Preview
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+                  <p className="text-xs font-semibold text-[var(--text)]">Instant Answers</p>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">Get citation-backed responses.</p>
+                </div>
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+                  <p className="text-xs font-semibold text-[var(--text)]">Secure</p>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">Google OAuth & JWT</p>
+                </div>
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+                  <p className="text-xs font-semibold text-[var(--text)]">Fast Search</p>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">Semantic retrieval via embeddings.</p>
+                </div>
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+                  <p className="text-xs font-semibold text-[var(--text)]">Collections</p>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">Organize by workspace.</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* FEATURES */}
+        <section className="mt-8">
+          <h3 className="text-lg font-semibold text-[var(--text)]">Features</h3>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((f) => (
+              <FeatureCard key={f.title} title={f.title} description={f.description} />
+            ))}
+          </div>
+        </section>
+
+        {/* WORKFLOW */}
+        <section className="mt-10">
+          <h3 className="text-lg font-semibold text-[var(--text)]">How it works</h3>
+          <div className="mt-4">
+            <Workflow />
+          </div>
+        </section>
+
+        {/* WHY */}
+        <section className="mt-10">
+          <h3 className="text-lg font-semibold text-[var(--text)]">Why DocuMind</h3>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {[
+              'Retrieval-Augmented Generation (RAG)',
+              'Citation-backed answers',
+              'Fast semantic search',
+              'Multi-document reasoning',
+              'Google OAuth authentication',
+              'Modern AI workspace',
+            ].map((t) => (
+              <div key={t} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-3 text-sm text-[var(--text-muted)]">{t}</div>
+            ))}
+          </div>
+        </section>
+
+        {/* TECH STACK */}
+        <section className="mt-10">
+          <h3 className="text-lg font-semibold text-[var(--text)]">Tech Stack</h3>
+          <div className="mt-4">
+            <TechStack />
+          </div>
+        </section>
+
+        {/* USE CASES */}
+        <section className="mt-10">
+          <h3 className="text-lg font-semibold text-[var(--text)]">Use Cases</h3>
+          <div className="mt-4">
+            <UseCases />
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="mt-12 text-center">
+          <div className="mx-auto max-w-2xl rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--card)] p-8">
+            <h3 className="text-2xl font-semibold text-[var(--text)]">Ready to build your AI workspace?</h3>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">Start with your documents and get instant, cited answers.</p>
+            <div className="mt-6 flex justify-center gap-3">
+              <Button variant="primary" size="lg" onClick={() => router.push('/login')}>Get Started</Button>
+              <Button variant="secondary" size="lg" className="hover:bg-gray-800/40 transition-colors" onClick={() => router.push('/login')}>Sign In</Button>
+            </div>
+          </div>
+        </section>
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

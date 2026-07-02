@@ -95,6 +95,26 @@ async def lifespan(app: FastAPI):
     await redis.close()
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    redis = aioredis.from_url(settings.redis_url, encoding="utf-8", decode_responses=True)
+    app.state.redis = redis
+    app.state.rate_limiters = {
+        "qa": Limiter(
+            [Rate(settings.qa_rate_limit_requests, Duration.SECOND * settings.qa_rate_limit_window_seconds)],
+            bucket_class=RedisBucket,
+            bucket_kwargs={"redis": redis, "bucket_key": "qa-rate-limit"},
+        ),
+        "upload": Limiter(
+            [Rate(settings.upload_rate_limit_requests, Duration.SECOND * settings.upload_rate_limit_window_seconds)],
+            bucket_class=RedisBucket,
+            bucket_kwargs={"redis": redis, "bucket_key": "upload-rate-limit"},
+        ),
+    }
+    yield
+    await redis.close()
+
+
 def create_app() -> FastAPI:
     configure_logging()
     app = FastAPI(title=settings.app_name, lifespan=lifespan)
