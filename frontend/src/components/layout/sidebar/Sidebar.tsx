@@ -10,6 +10,7 @@ import {
   FolderKanban,
   Hash,
   Clock,
+  LogOut,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -25,7 +26,7 @@ export default function Sidebar({
   onNewChat,
   collapsed = false,
 }: SidebarProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { data: collections = [] } = useCollections();
   const { data: sessions = [] } = useQASessions();
 
@@ -184,11 +185,15 @@ export default function Sidebar({
             flex
             items-center
             gap-3
-            rounded-xl
-            bg-[var(--background)]
-            p-3
-            transition
-            hover:bg-[var(--surface)]
+            rounded-3xl
+            border
+            border-[var(--border)]
+            bg-[var(--surface)]
+            px-4
+            py-3
+            transition-colors
+            duration-150
+            hover:bg-[rgba(255,255,255,0.06)]
           "
         >
           <div
@@ -199,7 +204,8 @@ export default function Sidebar({
               items-center
               justify-center
               rounded-full
-              bg-[var(--surface)]
+              bg-[var(--background)]
+              text-[var(--text)]
               font-semibold
             "
           >
@@ -207,15 +213,34 @@ export default function Sidebar({
           </div>
 
           {!collapsed && (
-            <div>
-              <p className="text-sm font-medium">
-                {user?.email ?? "Guest"}
-              </p>
-
-              <p className="text-xs text-[var(--text-muted)]">
-                Account
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-[var(--text)]">
+                {user?.full_name ?? user?.email?.split("@")[0] ?? "Guest"}
               </p>
             </div>
+          )}
+
+          {!collapsed && user && (
+            <button
+              type="button"
+              onClick={logout}
+              className="
+                inline-flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                rounded-full
+                bg-white
+                text-[var(--surface)]
+                shadow-sm
+                transition-colors
+                duration-150
+                hover:bg-slate-100
+              "
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           )}
         </div>
       </div>
