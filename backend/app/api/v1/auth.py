@@ -1,10 +1,16 @@
-﻿from fastapi import APIRouter, Depends, HTTPException, status
+﻿from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-import secrets
 
 from backend.app.config import settings
-from backend.app.core.oauth import OAuthProvider
+from backend.app.core.oauth import (
+    OAuthProvider,
+    clear_oauth_state_cookie,
+    generate_oauth_state,
+    get_oauth_state_cookie,
+    set_oauth_state_cookie,
+    validate_oauth_state,
+)
 from backend.app.db.session import get_db
 from backend.app.schemas.auth import (
     OAuthCallbackQuery,
@@ -33,17 +39,17 @@ async def google_login(payload: OAuthLoginRequest) -> JSONResponse:
             detail="Invalid provider",
         )
 
-    # Generate a state value for CSRF protection and include it in the URL.
-    # For a production system, you would typically persist this state
-    # (e.g., in a session or signed cookie) and validate it in the callback.
-    state = secrets.token_urlsafe(32)
-
+    state = generate_oauth_state()
     redirect_url = build_google_oauth_login_url(state=state)
-    return JSONResponse({"authorization_url": redirect_url})
+
+    response = JSONResponse({"authorization_url": redirect_url})
+    set_oauth_state_cookie(response, state)
+    return response
 
 
 @router.get("/google/callback")
 async def google_callback(
+    request: Request,
     query: OAuthCallbackQuery = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
@@ -56,14 +62,21 @@ async def google_callback(
     - Redirects to frontend /auth/callback with tokens
     """
     if not query.code:
-        raise HTTPException(
+        response = JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing authorization code",
+            content={"detail": "Missing authorization code"},
         )
+        clear_oauth_state_cookie(response)
+        return response
 
-    # NOTE: query.state is parsed/required by OAuthCallbackQuery.
-    # At this point, you could validate it against whatever you stored when
-    # generating `state` in google_login, if you add persistence.
+    cookie_state = get_oauth_state_cookie(request)
+    if not validate_oauth_state(cookie_state, query.state):
+        response = JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "Invalid OAuth state"},
+        )
+        clear_oauth_state_cookie(response)
+        return response
 
     try:
         userinfo = exchange_code_and_get_userinfo(query.code)
@@ -95,7 +108,9 @@ async def google_callback(
         f"{settings.frontend_origin}/auth/callback"
         f"?access_token={access_token}&refresh_token={refresh_token}"
     )
-    return RedirectResponse(url=callback_url, status_code=status.HTTP_302_FOUND)
+    response = RedirectResponse(url=callback_url, status_code=status.HTTP_302_FOUND)
+    clear_oauth_state_cookie(response)
+    return response
 
 
 @router.post("/dev-login", response_model=AuthResponse)
